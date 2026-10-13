@@ -191,6 +191,7 @@ public:
 	/** @brief Copies depth and motion vectors for frame generation; returns false if its shaders or shared buffers are unavailable. */
 	bool CopySharedD3D12Resources();
 	void PostDisplay();
+	void PostPresent();
 	void PerformUpscaling();
 	void UpscaleDepth();
 

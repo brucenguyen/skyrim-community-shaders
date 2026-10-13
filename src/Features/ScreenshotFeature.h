@@ -52,6 +52,7 @@ private:
 	struct PendingScreenshot
 	{
 		winrt::com_ptr<ID3D11Texture2D> stagingTexture;
+		winrt::com_ptr<ID3D11Texture2D> uiStagingTexture;
 		DXGI_FORMAT format = DXGI_FORMAT_UNKNOWN;
 		uint32_t width = 0;
 		uint32_t height = 0;

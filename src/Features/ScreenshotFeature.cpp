@@ -16,6 +16,7 @@
 
 #define I18N_KEY_PREFIX "feature.screenshot."
 
+#include <DirectXPackedVector.h>
 #include <DirectXTex.h>
 #pragma warning(push)
 #pragma warning(disable : 4244)  // double->float conversion in third-party header
@@ -168,6 +169,33 @@ namespace
 			tonemapped);
 		if (SUCCEEDED(hr)) {
 			image = std::move(tonemapped);
+		}
+	}
+
+	// Premultiplied "over" in the stored encoding, matching FidelityFX's UI composition.
+	void CompositePremultipliedUI(DirectX::ScratchImage& scene, const DirectX::ScratchImage& ui)
+	{
+		using namespace DirectX;
+		const Image* sceneImage = scene.GetImage(0, 0, 0);
+		const Image* uiImage = ui.GetImage(0, 0, 0);
+		if (!sceneImage || !uiImage) {
+			return;
+		}
+
+		ScratchImage composited;
+		const HRESULT hr = TransformImage(
+			*sceneImage,
+			[uiImage](XMVECTOR* outPixels, const XMVECTOR* inPixels, size_t width, size_t y) {
+				const auto* uiRow = reinterpret_cast<const PackedVector::XMUBYTEN4*>(uiImage->pixels + y * uiImage->rowPitch);
+				for (size_t i = 0; i < width; ++i) {
+					const XMVECTOR uiPixel = PackedVector::XMLoadUByteN4(&uiRow[i]);
+					const XMVECTOR blended = XMVectorMultiplyAdd(inPixels[i], XMVectorSubtract(g_XMOne, XMVectorSplatW(uiPixel)), uiPixel);
+					outPixels[i] = XMVectorSelect(inPixels[i], blended, g_XMSelect1110);
+				}
+			},
+			composited);
+		if (SUCCEEDED(hr)) {
+			scene = std::move(composited);
 		}
 	}
 
@@ -834,6 +862,19 @@ void ScreenshotFeature::ScreenshotWorkerLoop()
 			continue;
 		}
 
+		if (screenshot.uiStagingTexture) {
+			DirectX::ScratchImage ui;
+			if (PopulateScratchImageFromStagingTexture(
+					context,
+					screenshot.uiStagingTexture.get(),
+					DXGI_FORMAT_R8G8B8A8_UNORM,
+					screenshot.width,
+					screenshot.height,
+					ui)) {
+				CompositePremultipliedUI(image, ui);
+			}
+		}
+
 		Util::FileHelpers::EnsureDirectoryExists(screenshot.outputPath.parent_path());
 
 		const bool saveOk = SaveScreenshotToDisk(
@@ -934,6 +975,23 @@ void ScreenshotFeature::Capture()
 
 	context->CopySubresourceRegion(stagingTexture.get(), 0, 0, 0, 0, sourceTexture, 0, &sourceRegion);
 
+	// FG composites the UI on the D3D12 side, after the buffer we capture.
+	winrt::com_ptr<ID3D11Texture2D> uiStagingTexture;
+	auto& dx12SwapChain = globals::features::upscaling.dx12SwapChain;
+	if (globals::features::upscaling.ShouldUseFrameGenerationThisFrame() &&
+		dx12SwapChain.uiBufferWrapped && !Menu::GetSingleton()->IsEnabled) {
+		ID3D11Texture2D* uiTexture = dx12SwapChain.uiBufferWrapped->resource11;
+		D3D11_TEXTURE2D_DESC uiDesc{};
+		uiTexture->GetDesc(&uiDesc);
+		if (uiDesc.Format == DXGI_FORMAT_R8G8B8A8_UNORM && uiDesc.Width == srcDesc.Width && uiDesc.Height == srcDesc.Height) {
+			D3D11_TEXTURE2D_DESC uiStagingDesc = stagingDesc;
+			uiStagingDesc.Format = uiDesc.Format;
+			if (SUCCEEDED(device->CreateTexture2D(&uiStagingDesc, nullptr, uiStagingTexture.put()))) {
+				context->CopySubresourceRegion(uiStagingTexture.get(), 0, 0, 0, 0, uiTexture, 0, &sourceRegion);
+			}
+		}
+	}
+
 	// Match SelectCaptureSource: only the flat HDR back-buffer path uses HDR PNG.
 	// Do not key off DXGI format alone — kFRAMEBUFFER can be float/HDR-sized in SDR mode.
 	const bool flatHdrCapture = IsFlatHdrScreenshotCapture();
@@ -947,6 +1005,7 @@ void ScreenshotFeature::Capture()
 	EnsureWorkerThread();
 	PendingScreenshot screenshot;
 	screenshot.stagingTexture = std::move(stagingTexture);
+	screenshot.uiStagingTexture = std::move(uiStagingTexture);
 	screenshot.format = srcDesc.Format;
 	screenshot.width = copyW;
 	screenshot.height = copyH;

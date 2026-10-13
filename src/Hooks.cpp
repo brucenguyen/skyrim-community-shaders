@@ -414,6 +414,7 @@ struct IDXGISwapChain_Present
 			});
 
 		globals::features::screenshotFeature.ProcessCaptureRequest();
+		globals::features::upscaling.PostPresent();
 
 		NvPerf::OnPresentEnd();
 

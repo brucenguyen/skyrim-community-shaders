@@ -1142,6 +1142,20 @@ void Upscaling::PostDisplay()
 	globals::state->UpdateSharedData(false, false);
 }
 
+void Upscaling::PostPresent()
+{
+	if (!d3d12SwapChainActive)
+		return;
+
+	if (dx12SwapChain.uiBufferWrapped) {
+		const float clearColor[4]{};
+		dx12SwapChain.d3d11Context->ClearRenderTargetView(dx12SwapChain.uiBufferWrapped->rtv, clearColor);
+	}
+
+	// The next frame decides frame generation again in Main_PostProcessing.
+	frameGenerationPrepared = false;
+}
+
 void Upscaling::TimerSleepQPC(int64_t targetQPC)
 {
 	LARGE_INTEGER currentQPC;
