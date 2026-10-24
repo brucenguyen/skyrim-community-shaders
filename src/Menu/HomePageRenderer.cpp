@@ -82,7 +82,7 @@ void HomePageRenderer::RenderWelcomeSection()
 
 	if (Plugin::BUILD_DESCRIBE != expectedTag) {
 		ImGui::SetCursorPosX(std::max((windowSize.x - ImGui::CalcTextSize(Plugin::BUILD_DESCRIBE.data()).x) * 0.5f, ImGui::GetCursorPosX()));
-		ImGui::TextDisabled("%s", Plugin::BUILD_DESCRIBE.data());
+		Util::Text::WrappedDisabled("%s", Plugin::BUILD_DESCRIBE.data());
 	}
 
 	ImGui::Spacing();
