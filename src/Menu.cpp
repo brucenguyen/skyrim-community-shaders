@@ -1091,7 +1091,7 @@ void Menu::ProcessInputEventQueue()
 							 IsEnabled = !IsEnabled;
 							 if (IsEnabled)
 								 ImGui::GetIO().ClearInputKeys();  // Prevent toggle key from remaining "held" in ImGui after open.
-						 } else {
+						 } else if (HomePageRenderer::ShouldShowFirstTimeSetup()) {
 							 HomePageRenderer::MarkFirstTimeSetupComplete();
 						 }
 					 } },
