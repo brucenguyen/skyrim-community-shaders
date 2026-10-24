@@ -3272,7 +3272,6 @@
     "menu.home.nexus_mods": "Nexus Mods",
     "menu.home.quick_links": "Quick Links",
     "menu.home.welcome": "Welcome to Community Shaders {version}",
-    "menu.home.welcome_dev": "Welcome to Community Shaders {version} [{build}]",
     "menu.home.wiki": "Wiki",
     "menu.issues.all_ini_loading": "All feature INI files are loading successfully.",
     "menu.issues.baseline_failures_desc": "These Baseline preset files failed to load or apply. Check the file format and content.",

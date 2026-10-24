@@ -1570,7 +1570,6 @@
     "menu.home.nexus_mods": "Nexus Mods",
     "menu.home.quick_links": "Быстрые ссылки",
     "menu.home.welcome": "Добро пожаловать в Community Shaders {version}",
-    "menu.home.welcome_dev": "Добро пожаловать в Community Shaders {version} [{build}]",
     "menu.home.wiki": "Вики",
     "menu.issues.all_ini_loading": "Все INI-файлы функций загружаются успешно.",
     "menu.issues.cancel": "Отмена",

@@ -3269,7 +3269,6 @@
     "menu.home.nexus_mods": "Nexus Mods",
     "menu.home.quick_links": "快速链接",
     "menu.home.welcome": "欢迎使用Community Shaders {version}",
-    "menu.home.welcome_dev": "欢迎使用Community Shaders {version} [{build}]",
     "menu.home.wiki": "Wiki",
     "menu.issues.all_ini_loading": "所有功能INI文件加载成功。",
     "menu.issues.baseline_failures_desc": "这些基础预设文件加载或应用失败。请检查文件格式和内容。",
